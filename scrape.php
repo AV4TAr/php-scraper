@@ -4,7 +4,7 @@ include('simple_html_dom.php');
 
 $initial_url = 'http://www.di.net/almanac/firms/page';
 $columns = array(0=>"Firm", 4=>"Headquarters", 5=>"Revenue", 6=>"Staff", 7=>"Offices", 8=>"Year");
-$selector = 'table.firm_list tbody tr';
+$selector = 'table.firm_list tbody tr td a';
 
 
 /**
