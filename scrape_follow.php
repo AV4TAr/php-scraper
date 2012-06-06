@@ -31,11 +31,6 @@ while($continue){
 		//intento la siguiente pagina
 		$pager++;
 		$html = file_get_html($initial_url.$pager);
-
-		if($pager ==2 ){
-			$continue = false;
-		}
-
 	} else {
 		//no dom to read
 		$continue = false;
@@ -44,10 +39,9 @@ while($continue){
 
 //GET the recod of each one
 $company_records = array();	
-$first_run = true; //used to get the titles and print them out;
+$record_keys = array("url"=>"Url", "title"=>"Title");
 if(count($records_urls)){
 	foreach($records_urls as $record_url){
-		//echo $base_url.$record_url."\n";
 		$final_record_url = $base_url.$record_url;
 		$html = file_get_html($final_record_url);
 		if($html){
@@ -59,22 +53,11 @@ if(count($records_urls)){
 			$find_dom = $html->find('table.firm_info tbody tr');
 			$company_record = array("url"=>$final_record_url, "title"=>$company_title);
 			foreach($find_dom as $e){
-				//echo $e->plaintext."\n";
-				//echo $e->children(0)->plaintext.' -> '.$e->children(1)->plaintext."\n";
 				$company_record[strtolower($e->children(0)->plaintext)] = sanitaize($e->children(1)->plaintext);
-
-			}
-			if($first_run){
-				$table_keys = array();
-				foreach($company_record as $k => $v){
-					$table_keys[] = $k;
+				if(!isset($record_keys[$e->children(0)->plaintext])){
+					$record_keys[strtolower($e->children(0)->plaintext)]=$e->children(0)->plaintext;
 				}
-				echo implode(';', $table_keys)."\n";
-				$first_run = false;
 			}
-
-			echo implode(';',$company_record)."\n";
-
 			$company_records[] = $company_record;
 		}
 	}
@@ -82,5 +65,15 @@ if(count($records_urls)){
 	echo 'No URLs to scrape';
 }
 
-//Genero el csv
-//echo implode("\n", $csv_records);
+echo implode(";",$record_keys)."\n";
+
+foreach($company_records as $company_record){
+	foreach($record_keys as $key => $value){
+		if(isset($company_record[strtolower($key)])){
+			$print_record[strtolower($key)] = $company_record[strtolower($key)];
+		} else {
+			$print_record[strtolower($key)] = '';
+		}
+	}
+	echo implode(";", $print_record)."\n";
+}
