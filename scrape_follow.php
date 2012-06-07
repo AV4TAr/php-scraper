@@ -1,48 +1,57 @@
 <?php
-error_reporting(0);
 include('simple_html_dom.php');
-$base_url = 'http://www.di.net';
 
+$base_url = 'http://www.di.net';
+$field_separator = ';';
 
 /**
-* Cleans a string
+* Cleans a string and remove unwanted characters
 * @param string $text
 */
 function sanitaize($text){
+	global $field_separator; //i know i know.. it was kiss
+
 	$text = html_entity_decode($text); //decode html to actual stuff
 	$text = preg_replace("/[\n\r]/"," - ",$text); //remove line breaks
-	$text = str_replace(";", ",", $text); //remove ;
+	$text = str_replcae('&#039;"', '\'', $text);
+	$text = str_replace('&amp;', '&', $text);
+	$text = str_replace($field_separator, ',', $text); 
 	return (string) $text;
 }
 
 //FIRST GET THE urls of all the companies
 $initial_url = $base_url.'/almanac/firms/page';
-$selector = 'table.firm_list tbody tr td a';
-$pager = 1;
-$continue = true;
+$pager = 1; //used to change the url to fetch other pages
+
+$selector = 'table.firm_list tbody tr td a'; //CSS selector of the link
+$continue = true; //flag to stop scrapping
 $html = file_get_html($initial_url.$pager);
 $records_urls = array();
 while($continue){
-	$find_dom = $html->find($selector);
+	//echo "Pagina: ".$pager."\n";
+	$find_dom = $html->find($selector); //select the DOM of the link
 	if(count($find_dom) > 0 ){
 		foreach ($find_dom as $e) {
-			$records_urls[] = $e->href;
+			$records_urls[] = $e->href;  //get the link
 		}
-		//intento la siguiente pagina
+		//will try next page
 		$pager++;
 		$html = file_get_html($initial_url.$pager);
 	} else {
-		//no dom to read
+		//no dom to read stop scraping links
 		$continue = false;
 	}
 }
 
-//GET the recod of each one
+//GET the recod of each one of those links
 $company_records = array();	
 $record_keys = array("url"=>"Url", "title"=>"Title");
+$i = 1;
 if(count($records_urls)){
 	foreach($records_urls as $record_url){
 		$final_record_url = $base_url.$record_url;
+		//echo $i."-> ".$final_record_url."\n";
+		$i++;
 		$html = file_get_html($final_record_url);
 		if($html){
 			//Get the name of the company
